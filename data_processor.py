@@ -27,9 +27,7 @@ def data_loader(args):
         def __len__(self):
             return self.len
 
-    # trn_loader = torch.utils.data.DataLoader(dataset=RandomDataset(Training_lable, 89600), batch_size=args.batch_size,
-    #                                          shuffle=True, **kwopt, drop_last=False)
-    trn_loader = torch.utils.data.DataLoader(dataset=RandomDataset(Training_lable, 128), batch_size=args.batch_size,
+    trn_loader = torch.utils.data.DataLoader(dataset=RandomDataset(Training_lable, 89600), batch_size=args.batch_size,
                                              shuffle=True, **kwopt, drop_last=False)
 
     return trn_loader

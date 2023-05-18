@@ -20,7 +20,7 @@ def main():
     else:
         raise ImportError
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # Create save directory
@@ -37,13 +37,13 @@ def main():
 
     if args.sensing_rate != 0.5:
         pretrain_dir = "./{}/{}_group_{}_ratio_0.50".format(args.save_dir, args.model, args.group_num)
-        checkpoint = torch.load("{]/net_params_100.pth".format(pretrain_dir))
+        checkpoint = torch.load("{}/net_params_100.pth".format(pretrain_dir), map_location=device)
         dict_new = model.state_dict().copy()
         new_list = list(model.state_dict().keys())
         dict_trained = checkpoint['net']
         trained_list = list(dict_trained.keys())
         # print("new_state_dict size: {}  trained state_dict size: {}".format(len(new_list), len(trained_list)))
-        dict_new[ new_list[0] ] = dict_trained[ trained_list[0] ][:int(args.sensing_rate * 1024),:]
+        dict_new[new_list[0]] = dict_trained[trained_list[0]][:int(args.sensing_rate * 1024), :]
         for i in range(len(new_list) - 1):
             dict_new[new_list[i + 1]] = dict_trained[trained_list[i + 1]]
         model.load_state_dict(dict_new)
@@ -62,7 +62,7 @@ def main():
 
     if args.start_epoch > 0:
         pre_model_dir = model_dir
-        checkpoint = torch.load("{}/net_params_{}.pth".format(pre_model_dir, args.start_epoch))
+        checkpoint = torch.load("{}/net_params_{}.pth".format(pre_model_dir, args.start_epoch), map_location=device)
         model.load_state_dict(checkpoint['net'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         start_epoch = checkpoint["epoch"] + 1
@@ -89,21 +89,14 @@ def main():
         output_file.write(print_data)
         output_file.close()
 
-        # if epoch > 50 or args.sensing_rate != 0.5:
-        #     if epoch % 5 == 0:
-        #         checkpoint = {
-        #             'epoch': epoch,
-        #             'net': model.state_dict(),
-        #             'optimizer': optimizer.state_dict(),
-        #         }
-        #         torch.save(checkpoint, "{}/net_params_{}.pth".format(model_dir, epoch))
-        checkpoint = {
-            'epoch': epoch,
-            'net': model.state_dict(),
-            'optimizer': optimizer.state_dict(),
-        }
-        torch.save(checkpoint, "{}/net_params_{}.pth".format(model_dir, epoch))
-
+        if epoch > 50 or args.sensing_rate != 0.5:
+            if epoch % 5 == 0:
+                checkpoint = {
+                    'epoch': epoch,
+                    'net': model.state_dict(),
+                    'optimizer': optimizer.state_dict(),
+                }
+                torch.save(checkpoint, "{}/net_params_{}.pth".format(model_dir, epoch))
 
     print('Trained finished.')
 
@@ -115,7 +108,7 @@ if __name__ == '__main__':
     parser.add_argument('--group_num', type=int, default=100, help='group number for training')
     parser.add_argument('--start_epoch', default=0, type=int, help='epoch number of start training')
     parser.add_argument('--warm_epochs', default=3, type=int, help='number of epochs to warm up')
-    parser.add_argument('--epochs', default=1, type=int, help='number of total epochs to run')
+    parser.add_argument('--epochs', default=100, type=int, help='number of total epochs to run')
     parser.add_argument('-b', '--batch_size', default=32, type=int, help='mini-batch size (default: 128)')
     parser.add_argument('--block_size', default=32, type=int, help='block size (default: 32)')
     parser.add_argument('--lr', '--learning_rate', default=2e-4, type=float, help='initial learning rate')

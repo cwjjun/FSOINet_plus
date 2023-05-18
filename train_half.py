@@ -21,7 +21,7 @@ def main():
     else:
         raise ImportError
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # Create save directory
@@ -39,7 +39,7 @@ def main():
     
     if args.sensing_rate != 0.5:
         pretrain_dir = "./{}/{}_group_{}_ratio_0.50".format(args.save_dir, args.model, args.group_num)
-        checkpoint = torch.load("{]/net_params_100.pth".format(pretrain_dir))
+        checkpoint = torch.load("{]/net_params_100.pth".format(pretrain_dir), map_location=device)
         dict_new = model.state_dict().copy()
         new_list = list(model.state_dict().keys())
         dict_trained = checkpoint['net']
@@ -64,7 +64,7 @@ def main():
 
     if args.start_epoch > 0:
         pre_model_dir = model_dir
-        checkpoint = torch.load("{}/net_params_{}.pth".format(pre_model_dir, args.start_epoch))
+        checkpoint = torch.load("{}/net_params_{}.pth".format(pre_model_dir, args.start_epoch), map_location=device)
         model.load_state_dict(checkpoint['net'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         start_epoch = checkpoint["epoch"] + 1
